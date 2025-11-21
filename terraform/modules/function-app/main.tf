@@ -25,25 +25,25 @@ resource "azurerm_linux_function_app" "main" {
       dotnet_version              = "8.0"
       use_dotnet_isolated_runtime = true
     }
-    
-    ftps_state                  = "Disabled"
-    http2_enabled               = true
-    minimum_tls_version         = "1.2"
-    vnet_route_all_enabled      = true
-    
+
+    ftps_state             = "Disabled"
+    http2_enabled          = true
+    minimum_tls_version    = "1.2"
+    vnet_route_all_enabled = true
+
     cors {
       allowed_origins = ["https://portal.azure.com"]
     }
   }
 
   app_settings = merge({
-    "FUNCTIONS_WORKER_RUNTIME"       = "dotnet-isolated"
-    "AzureWebJobsStorage"            = var.storage_connection_string
+    "FUNCTIONS_WORKER_RUNTIME"                 = "dotnet-isolated"
+    "AzureWebJobsStorage"                      = var.storage_connection_string
     "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING" = var.storage_connection_string
-    "WEBSITE_CONTENTSHARE"           = "func-${var.project_name}-${var.environment}"
-    "KeyVaultName"                   = split("/", var.key_vault_id)[8]
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = var.application_insights_key
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = var.application_insights_conn
+    "WEBSITE_CONTENTSHARE"                     = "func-${var.project_name}-${var.environment}"
+    "KeyVaultName"                             = split("/", var.key_vault_id)[8]
+    "APPINSIGHTS_INSTRUMENTATIONKEY"           = var.application_insights_key
+    "APPLICATIONINSIGHTS_CONNECTION_STRING"    = var.application_insights_conn
   }, var.additional_app_settings)
 
   virtual_network_subnet_id = var.subnet_id

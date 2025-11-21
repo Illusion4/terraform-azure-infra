@@ -1,31 +1,31 @@
 variable "resource_group_name" {
-    type = string
+  type = string
 }
 
 variable "location" {
-    type = string
+  type = string
 }
 
 variable "environment" {
-    type = string
+  type = string
 }
 
 variable "project_name" {
-    type = string
+  type = string
 }
 
 variable "unique_suffix" {
-    type = string
+  type = string
 }
 
 variable "allowed_ips" {
-    type = list(string)
+  type = list(string)
 }
 
 variable "subnet_id" {
-    type = string
+  type = string
 }
 
 variable "tags" {
-    type = map(string)
+  type = map(string)
 }

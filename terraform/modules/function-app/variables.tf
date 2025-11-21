@@ -1,59 +1,59 @@
 variable "resource_group_name" {
-    type = string
+  type = string
 }
 
 variable "location" {
-    type = string
+  type = string
 }
 
 variable "environment" {
-    type = string
+  type = string
 }
 
 variable "project_name" {
-    type = string
+  type = string
 }
 
 variable "unique_suffix" {
-    type = string
+  type = string
 }
 
 variable "storage_account_name" {
-    type = string
+  type = string
 }
 
 variable "storage_account_key" {
-    type      = string
-    sensitive = true
+  type      = string
+  sensitive = true
 }
 
 variable "storage_connection_string" {
-    type      = string
-    sensitive = true
+  type      = string
+  sensitive = true
 }
 
 variable "subnet_id" {
-    type = string
+  type = string
 }
 
 variable "key_vault_id" {
-    type = string
+  type = string
 }
 
 variable "application_insights_key" {
-    type    = string
-    default = null
+  type    = string
+  default = null
 }
 
 variable "application_insights_conn" {
-    type    = string
-    default = null
+  type    = string
+  default = null
 }
 
 variable "additional_app_settings" {
-    type = map(string)
+  type = map(string)
 }
 
 variable "tags" {
-    type = map(string)
+  type = map(string)
 }
