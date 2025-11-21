@@ -1,6 +1,3 @@
-# Azure DevOps Pipeline for Terraform
-# This pipeline automates Terraform deployments across multiple environments
-
 trigger:
   branches:
     include:
@@ -17,93 +14,77 @@ pool:
 variables:
   - name: terraformVersion
     value: '1.6.0'
+  - name: backendServiceConnection
+    value: 'Azure-Service-Connection'
   - name: backendResourceGroup
     value: 'terraform-state-rg'
-  - name: backendLocation
-    value: 'westeurope'
   - name: backendStorageAccount
     value: 'tfstateprojectdev'
+  - name: backendContainer
+    value: 'tfstate'
+  - name: backendKey
+    value: 'terraform.tfstate'
 
 stages:
-  # Validate stage - runs on all branches
   - stage: Validate
     displayName: 'Validate Terraform'
     jobs:
       - job: ValidateJob
-        displayName: 'Terraform Validate and Format Check'
+        displayName: 'Validation Checks'
         steps:
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             displayName: 'Install Terraform'
             inputs:
               terraformVersion: $(terraformVersion)
 
           - script: terraform fmt -check -recursive
             displayName: 'Terraform Format Check'
-            continueOnError: true
+            continueOnError: false 
 
           - script: terraform init -backend=false
-            displayName: 'Terraform Init'
+            displayName: 'Terraform Init (Backendless)'
 
           - script: terraform validate
             displayName: 'Terraform Validate'
 
-  # Plan stage for Development
   - stage: PlanDev
     displayName: 'Plan - Development'
     dependsOn: Validate
     condition: succeeded()
     jobs:
       - job: PlanDevJob
-        displayName: 'Plan Dev Environment'
+        displayName: 'Plan Dev'
         steps:
-          - task: TerraformInstaller@0
+          - task: TerraformInstaller@1
             inputs:
               terraformVersion: $(terraformVersion)
 
-          - task: AzureCLI@2
-            displayName: 'Ensure Terraform backend storage'
-            inputs:
-              azureSubscription: 'Azure-Service-Connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              workingDirectory: '$(System.DefaultWorkingDirectory)'
-              inlineScript: |
-                chmod +x terraform/scripts/create_backend_storage.sh
-                terraform/scripts/create_backend_storage.sh \
-                  --resource-group $(backendResourceGroup) \
-                  --location $(backendLocation) \
-                  --storage-account $(backendStorageAccount) \
-                  --container tfstate
-
-          - task: AzureCLI@2
+          - task: TerraformTaskV4@4
             displayName: 'Terraform Init'
             inputs:
-              azureSubscription: 'Azure-Service-Connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                terraform init \
-                  -backend-config="resource_group_name=$(backendResourceGroup)" \
-                  -backend-config="storage_account_name=$(backendStorageAccount)" \
-                  -backend-config="container_name=tfstate" \
-                  -backend-config="key=terraform.tfstate" \
-                  -backend-config="use_azuread_auth=true"
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: '$(backendServiceConnection)'
+              backendAzureRmResourceGroupName: '$(backendResourceGroup)'
+              backendAzureRmStorageAccountName: '$(backendStorageAccount)'
+              backendAzureRmContainerName: '$(backendContainer)'
+              backendAzureRmKey: '$(backendKey)'
+              backendAzureRmUseEntraIdAuth: true 
 
-          - task: AzureCLI@2
+          - task: TerraformTaskV4@4
             displayName: 'Terraform Plan'
             inputs:
-              azureSubscription: 'Azure-Service-Connection'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                terraform plan -var-file=environments/dev.tfvars -out=tfplan
+              provider: 'azurerm'
+              command: 'plan'
+              commandOptions: '-var-file=environments/dev.tfvars -out=$(System.DefaultWorkingDirectory)/tfplan'
+              environmentServiceNameAzureRM: '$(backendServiceConnection)'
 
           - task: PublishPipelineArtifact@1
+            displayName: 'Publish Plan Artifact'
             inputs:
-              targetPath: 'tfplan'
+              targetPath: '$(System.DefaultWorkingDirectory)/tfplan'
               artifact: 'dev-tfplan'
 
-  # Apply stage for Development
   - stage: ApplyDev
     displayName: 'Apply - Development'
     dependsOn: PlanDev
@@ -116,41 +97,34 @@ stages:
           runOnce:
             deploy:
               steps:
-                - task: TerraformInstaller@0
+                - checkout: self
+
+                - task: TerraformInstaller@1
                   inputs:
                     terraformVersion: $(terraformVersion)
 
-                - task: AzureCLI@2
-                  displayName: 'Ensure Terraform backend storage'
-                  inputs:
-                    azureSubscription: 'Azure-Service-Connection'
-                    scriptType: 'bash'
-                    scriptLocation: 'inlineScript'
-                    workingDirectory: '$(System.DefaultWorkingDirectory)'
-                    inlineScript: |
-                      chmod +x terraform/scripts/create_backend_storage.sh
-                      terraform/scripts/create_backend_storage.sh \
-                        --resource-group $(backendResourceGroup) \
-                        --location $(backendLocation) \
-                        --storage-account $(backendStorageAccount) \
-                        --container tfstate
-
                 - task: DownloadPipelineArtifact@2
+                  displayName: 'Download Plan Artifact'
                   inputs:
                     artifact: 'dev-tfplan'
-                    path: $(System.DefaultWorkingDirectory)
+                    path: '$(System.DefaultWorkingDirectory)'
 
-                - task: AzureCLI@2
+                - task: TerraformTaskV4@4
+                  displayName: 'Terraform Init'
+                  inputs:
+                    provider: 'azurerm'
+                    command: 'init'
+                    backendServiceArm: '$(backendServiceConnection)'
+                    backendAzureRmResourceGroupName: '$(backendResourceGroup)'
+                    backendAzureRmStorageAccountName: '$(backendStorageAccount)'
+                    backendAzureRmContainerName: '$(backendContainer)'
+                    backendAzureRmKey: '$(backendKey)'
+                    backendAzureRmUseEntraIdAuth: true
+
+                - task: TerraformTaskV4@4
                   displayName: 'Terraform Apply'
                   inputs:
-                    azureSubscription: 'Azure-Service-Connection'
-                    scriptType: 'bash'
-                    scriptLocation: 'inlineScript'
-                    inlineScript: |
-                      terraform init \
-                        -backend-config="resource_group_name=$(backendResourceGroup)" \
-                        -backend-config="storage_account_name=$(backendStorageAccount)" \
-                        -backend-config="container_name=tfstate" \
-                        -backend-config="key=terraform.tfstate" \
-                        -backend-config="use_azuread_auth=true"
-                      terraform apply tfplan
+                    provider: 'azurerm'
+                    command: 'apply'
+                    commandOptions: '$(System.DefaultWorkingDirectory)/tfplan'
+                    environmentServiceNameAzureRM: '$(backendServiceConnection)'
