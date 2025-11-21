@@ -66,6 +66,7 @@ stages:
             inputs:
               provider: 'azurerm'
               command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
               backendServiceArm: '$(backendServiceConnection)'
               backendAzureRmResourceGroupName: '$(backendResourceGroup)'
               backendAzureRmStorageAccountName: '$(backendStorageAccount)'
@@ -78,6 +79,7 @@ stages:
             inputs:
               provider: 'azurerm'
               command: 'plan'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
               commandOptions: '-var-file=environments/dev.tfvars -out=$(System.DefaultWorkingDirectory)/tfplan'
               environmentServiceNameAzureRM: '$(backendServiceConnection)'
 
@@ -116,6 +118,7 @@ stages:
                   inputs:
                     provider: 'azurerm'
                     command: 'init'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
                     backendServiceArm: '$(backendServiceConnection)'
                     backendAzureRmResourceGroupName: '$(backendResourceGroup)'
                     backendAzureRmStorageAccountName: '$(backendStorageAccount)'
@@ -128,5 +131,6 @@ stages:
                   inputs:
                     provider: 'azurerm'
                     command: 'apply'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
                     commandOptions: '$(System.DefaultWorkingDirectory)/tfplan'
                     environmentServiceNameAzureRM: '$(backendServiceConnection)'
