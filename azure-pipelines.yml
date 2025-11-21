@@ -17,6 +17,12 @@ pool:
 variables:
   - name: terraformVersion
     value: '1.6.0'
+  - name: backendResourceGroup
+    value: 'terraform-state-rg'
+  - name: backendLocation
+    value: 'westeurope'
+  - name: backendStorageAccount
+    value: 'tfstateprojectdev'
   - group: azure-credentials  # Create this variable group in Azure DevOps
 
 stages:
@@ -56,13 +62,33 @@ stages:
               terraformVersion: $(terraformVersion)
 
           - task: AzureCLI@2
+            displayName: 'Ensure Terraform backend storage'
+            inputs:
+              azureSubscription: 'Azure-Service-Connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              workingDirectory: '$(System.DefaultWorkingDirectory)'
+              inlineScript: |
+                chmod +x terraform/scripts/create_backend_storage.sh
+                terraform/scripts/create_backend_storage.sh \
+                  --resource-group $(backendResourceGroup) \
+                  --location $(backendLocation) \
+                  --storage-account $(backendStorageAccount) \
+                  --container tfstate
+
+          - task: AzureCLI@2
             displayName: 'Terraform Init'
             inputs:
               azureSubscription: 'Azure-Service-Connection'
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
               inlineScript: |
-                terraform init -backend-config=backend.conf
+                terraform init \
+                  -backend-config="resource_group_name=$(backendResourceGroup)" \
+                  -backend-config="storage_account_name=$(backendStorageAccount)" \
+                  -backend-config="container_name=tfstate" \
+                  -backend-config="key=terraform.tfstate" \
+                  -backend-config="use_azuread_auth=true"
 
           - task: AzureCLI@2
             displayName: 'Terraform Plan'
@@ -95,6 +121,21 @@ stages:
                   inputs:
                     terraformVersion: $(terraformVersion)
 
+                - task: AzureCLI@2
+                  displayName: 'Ensure Terraform backend storage'
+                  inputs:
+                    azureSubscription: 'Azure-Service-Connection'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    workingDirectory: '$(System.DefaultWorkingDirectory)'
+                    inlineScript: |
+                      chmod +x terraform/scripts/create_backend_storage.sh
+                      terraform/scripts/create_backend_storage.sh \
+                        --resource-group $(backendResourceGroup) \
+                        --location $(backendLocation) \
+                        --storage-account $(backendStorageAccount) \
+                        --container tfstate
+
                 - task: DownloadPipelineArtifact@2
                   inputs:
                     artifact: 'dev-tfplan'
@@ -107,5 +148,10 @@ stages:
                     scriptType: 'bash'
                     scriptLocation: 'inlineScript'
                     inlineScript: |
-                      terraform init -backend-config=backend.conf
+                      terraform init \
+                        -backend-config="resource_group_name=$(backendResourceGroup)" \
+                        -backend-config="storage_account_name=$(backendStorageAccount)" \
+                        -backend-config="container_name=tfstate" \
+                        -backend-config="key=terraform.tfstate" \
+                        -backend-config="use_azuread_auth=true"
                       terraform apply tfplan
