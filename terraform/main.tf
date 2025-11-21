@@ -18,8 +18,8 @@ resource "azurerm_resource_group" "main" {
   tags     = local.common_tags
 }
 
-module "networking" {
-  source = "./modules/networking"
+module "network" {
+  source = "./modules/network"
 
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
@@ -31,7 +31,7 @@ module "networking" {
 }
 
 module "storage" {
-  source = "./modules/storage"
+  source = "./modules/storage-account"
 
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
