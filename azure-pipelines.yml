@@ -23,7 +23,6 @@ variables:
     value: 'westeurope'
   - name: backendStorageAccount
     value: 'tfstateprojectdev'
-  - group: azure-credentials  # Create this variable group in Azure DevOps
 
 stages:
   # Validate stage - runs on all branches
