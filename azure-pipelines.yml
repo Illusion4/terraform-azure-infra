@@ -1,0 +1,111 @@
+# Azure DevOps Pipeline for Terraform
+# This pipeline automates Terraform deployments across multiple environments
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - '**/*.tf'
+      - 'environments/**/*.tfvars'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: terraformVersion
+    value: '1.6.0'
+  - group: azure-credentials  # Create this variable group in Azure DevOps
+
+stages:
+  # Validate stage - runs on all branches
+  - stage: Validate
+    displayName: 'Validate Terraform'
+    jobs:
+      - job: ValidateJob
+        displayName: 'Terraform Validate and Format Check'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(terraformVersion)
+
+          - script: terraform fmt -check -recursive
+            displayName: 'Terraform Format Check'
+            continueOnError: true
+
+          - script: terraform init -backend=false
+            displayName: 'Terraform Init'
+
+          - script: terraform validate
+            displayName: 'Terraform Validate'
+
+  # Plan stage for Development
+  - stage: PlanDev
+    displayName: 'Plan - Development'
+    dependsOn: Validate
+    condition: succeeded()
+    jobs:
+      - job: PlanDevJob
+        displayName: 'Plan Dev Environment'
+        steps:
+          - task: TerraformInstaller@0
+            inputs:
+              terraformVersion: $(terraformVersion)
+
+          - task: AzureCLI@2
+            displayName: 'Terraform Init'
+            inputs:
+              azureSubscription: 'Azure-Service-Connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                terraform init -backend-config=backend.conf
+
+          - task: AzureCLI@2
+            displayName: 'Terraform Plan'
+            inputs:
+              azureSubscription: 'Azure-Service-Connection'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                terraform plan -var-file=environments/dev.tfvars -out=tfplan
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: 'tfplan'
+              artifact: 'dev-tfplan'
+
+  # Apply stage for Development
+  - stage: ApplyDev
+    displayName: 'Apply - Development'
+    dependsOn: PlanDev
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    jobs:
+      - deployment: DeployDev
+        displayName: 'Deploy to Development'
+        environment: 'development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@0
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    artifact: 'dev-tfplan'
+                    path: $(System.DefaultWorkingDirectory)
+
+                - task: AzureCLI@2
+                  displayName: 'Terraform Apply'
+                  inputs:
+                    azureSubscription: 'Azure-Service-Connection'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      terraform init -backend-config=backend.conf
+                      terraform apply tfplan
