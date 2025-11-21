@@ -13,3 +13,10 @@ provider "azurerm" {
 
   skip_provider_registration = true
 }
+
+terraform {
+  backend "azurerm" {
+    # Configuration is provided by the pipeline
+    # Don't hardcode values here when using the task
+  }
+}

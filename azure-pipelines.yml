@@ -102,6 +102,7 @@ stages:
             deploy:
               steps:
                 - checkout: self
+                  clean: "true"
 
                 - task: TerraformInstaller@1
                   inputs:
