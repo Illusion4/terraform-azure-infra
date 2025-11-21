@@ -18,8 +18,8 @@ resource "azurerm_resource_group" "main" {
   tags     = local.common_tags
 }
 
-module "network" {
-  source = "./modules/network"
+module "networking" {
+  source = "./modules/networking"
 
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
@@ -30,7 +30,7 @@ module "network" {
   tags                = local.common_tags
 }
 
-module "storage" {
+module "storage-account" {
   source = "./modules/storage-account"
 
   resource_group_name = azurerm_resource_group.main.name
@@ -71,9 +71,9 @@ module "function_app" {
   environment               = var.environment
   project_name              = var.project_name
   unique_suffix             = random_string.unique.result
-  storage_account_name      = module.storage.storage_account_name
-  storage_account_key       = module.storage.storage_account_key
-  storage_connection_string = module.storage.storage_connection_string
+  storage_account_name      = module.storage-account.storage_account_name
+  storage_account_key       = module.storage-account.storage_account_key
+  storage_connection_string = module.storage-account.storage_connection_string
   subnet_id                 = module.networking.functions_subnet_id
   key_vault_id              = module.key_vault.key_vault_id
   application_insights_key  = var.enable_monitoring ? azurerm_application_insights.main[0].instrumentation_key : null
@@ -84,7 +84,7 @@ module "function_app" {
 
 resource "azurerm_key_vault_secret" "storage_connection" {
   name         = "StorageConnectionString"
-  value        = module.storage.storage_connection_string
+  value        = module.storage-account.storage_connection_string
   key_vault_id = module.key_vault.key_vault_id
 
   depends_on = [module.key_vault]
