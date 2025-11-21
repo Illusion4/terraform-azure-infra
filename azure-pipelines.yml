@@ -15,7 +15,7 @@ variables:
   - name: terraformVersion
     value: '1.6.0'
   - name: backendServiceConnection
-    value: 'Azure-Service-Connection'
+    value: 'Azure-Service-Connection-v2'
   - name: backendResourceGroup
     value: 'terraform-state-rg'
   - name: backendStorageAccount
