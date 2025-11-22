@@ -3,7 +3,7 @@ resource "azurerm_storage_account" "main" {
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
-  account_replication_type = var.environment == "prod" ? "GRS" : "LRS"
+  account_replication_type = var.storage_replication_type
   account_kind             = "StorageV2"
   min_tls_version          = "TLS1_2"
 

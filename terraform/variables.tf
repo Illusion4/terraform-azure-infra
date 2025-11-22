@@ -4,6 +4,12 @@ variable "project_name" {
   default     = "azfuncapp"
 }
 
+variable "storage_replication_type" {
+  description = "Storage account replication type"
+  type        = string
+  default     = "LRS"
+}
+
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string

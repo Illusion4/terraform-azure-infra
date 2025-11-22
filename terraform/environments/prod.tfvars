@@ -26,3 +26,5 @@ subnet_prefixes = {
   functions = "10.2.1.0/24"
   private   = "10.2.2.0/24"
 }
+
+storage_replication_type = "GRS"
