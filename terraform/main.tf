@@ -39,6 +39,7 @@ module "storage-account" {
   project_name        = var.project_name
   unique_suffix       = random_string.unique.result
   tags                = local.common_tags
+  storage_replication_type = var.storage_replication_type
 }
 
 module "key_vault" {
