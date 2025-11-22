@@ -52,7 +52,6 @@ stages:
         steps:
           - template: templates/steps-plan.yml
             parameters:
-              terraformVersion: $(terraformVersion)
               workingDirectory: $(tfWorkingDir)
               backendServiceConnection: $(backendServiceConnection)
               backendResourceGroup: $(backendResourceGroup)
@@ -75,7 +74,6 @@ stages:
               steps:
                 - template: templates/steps-apply.yml
                   parameters:
-                    terraformVersion: $(terraformVersion)
                     workingDirectory: $(tfWorkingDir)
                     backendServiceConnection: $(backendServiceConnection)
                     backendResourceGroup: $(backendResourceGroup)
