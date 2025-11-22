@@ -45,6 +45,11 @@ variable "application_insights_key" {
   default = null
 }
 
+variable "service_plan_sku_name" {
+  type    = string
+  default = "B1"
+}
+
 variable "application_insights_conn" {
   type    = string
   default = null

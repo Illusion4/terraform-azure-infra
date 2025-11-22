@@ -3,7 +3,7 @@ resource "azurerm_service_plan" "main" {
   location            = var.location
   resource_group_name = var.resource_group_name
   os_type             = "Linux"
-  sku_name            = var.environment == "prod" ? "P1v3" : "B1"
+  sku_name            = var.service_plan_sku_name
   tags                = var.tags
 }
 

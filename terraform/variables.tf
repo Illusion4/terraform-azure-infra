@@ -10,6 +10,12 @@ variable "storage_replication_type" {
   default     = "LRS"
 }
 
+variable "service_plan_sku_name" {
+  description = "App Service Plan SKU"
+  type        = string
+  default     = "B1"
+}
+
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string

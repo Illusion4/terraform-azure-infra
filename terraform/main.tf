@@ -33,12 +33,12 @@ module "networking" {
 module "storage-account" {
   source = "./modules/storage-account"
 
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  environment         = var.environment
-  project_name        = var.project_name
-  unique_suffix       = random_string.unique.result
-  tags                = local.common_tags
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = azurerm_resource_group.main.location
+  environment              = var.environment
+  project_name             = var.project_name
+  unique_suffix            = random_string.unique.result
+  tags                     = local.common_tags
   storage_replication_type = var.storage_replication_type
 }
 
@@ -56,12 +56,13 @@ module "key_vault" {
 }
 
 resource "azurerm_application_insights" "main" {
-  count               = var.enable_monitoring ? 1 : 0
-  name                = "appi-${local.resource_suffix}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  application_type    = "web"
-  tags                = local.common_tags
+  count                 = var.enable_monitoring ? 1 : 0
+  name                  = "appi-${local.resource_suffix}"
+  location              = azurerm_resource_group.main.location
+  resource_group_name   = azurerm_resource_group.main.name
+  service_plan_sku_name = var.service_plan_sku_name
+  application_type      = "web"
+  tags                  = local.common_tags
 }
 
 module "function_app" {
