@@ -46,7 +46,7 @@ stages:
   - stage: PlanDev
     displayName: 'Plan - Development'
     dependsOn: Validate
-    condition: succeeded()
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
     jobs:
       - job: PlanDevJob
         steps:
@@ -64,7 +64,7 @@ stages:
   - stage: ApplyDev
     displayName: 'Apply - Development'
     dependsOn: PlanDev
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    condition: succeeded()
     jobs:
       - deployment: DeployDev
         environment: 'development'
