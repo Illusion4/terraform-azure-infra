@@ -19,7 +19,7 @@ variables:
   - name: backendContainer
     value: 'tfstate'
   - name: backendKey
-    value: 'terraform.tfstate'
+    value: 'dev/terraform.tfstate'
 
 stages:
   - stage: Destroy
